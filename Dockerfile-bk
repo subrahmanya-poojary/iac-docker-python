@@ -1,0 +1,27 @@
+# Base image
+FROM python:alpine
+
+# Copy app, templates and views
+COPY . /rps
+
+# Set working directory for subsequent commands
+WORKDIR /rps
+
+RUN apk add --no-cache curl unzip
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+
+RUN curl -sL https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.tgz -o ngrok.tgz \
+    && tar -xzf ngrok.tgz \
+    && mv ngrok /usr/local/bin/ \
+    && rm ngrok.tgz
+
+EXPOSE 5000
+EXPOSE 4040
+
+CMD sh -c "ngrok authtoken $NGROK_AUTHTOKEN && python app.py & ngrok http 5000"
+
+
+# Command to run when container starts
+#ENTRYPOINT ["python", "app/app.py"]

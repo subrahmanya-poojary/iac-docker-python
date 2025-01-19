@@ -1,0 +1,24 @@
+#!/bin/bash
+# Update the system and install required packages
+sex -x
+yum update -y
+yum install -y yum-utils
+
+# Add Docker's official repository
+yum-config-manager --add-repo https://download.docker.com/linux/rhel/docker-ce.repo
+
+# Install Docker
+yum install -y docker-ce docker-ce-cli containerd.io
+
+# Start and enable Docker service
+systemctl start docker
+systemctl enable docker
+
+# Add the ec2-user to the Docker group to avoid permission issues
+usermod -aG docker ec2-user
+
+# Pull the Docker image from Docker Hub
+docker pull subrahmanyapoojary1999/rock-paper-scissor:latest
+
+# (Optional) Run the Docker container
+docker run -d --name rps -p 80:5000 subrahmanyapoojary1999/rock-paper-scissor:latest

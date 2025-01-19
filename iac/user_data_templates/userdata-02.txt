@@ -1,0 +1,69 @@
+#!/bin/bash
+# Enable debug mode for troubleshooting
+set -x
+
+# Create and set permissions for the log file
+sudo touch /var/log/user-data.log
+sudo chmod 777 /var/log/user-data.log
+exec >> /var/log/user-data.log 2>&1
+
+# Update the system and install required packages
+yum update -y
+yum install -y yum-utils curl unzip jq epel-release
+
+# Download and install AWS CLI
+echo "Downloading AWS CLI installer..."
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+echo "Unzipping AWS CLI installer..."
+unzip -q awscliv2.zip
+echo "Installing AWS CLI..."
+sudo ./aws/install
+echo "Verifying AWS CLI installation..."
+/usr/local/bin/aws --version || { echo "AWS CLI installation failed"; exit 1; }
+echo "Cleaning up AWS CLI installer..."
+rm -rf awscliv2.zip aws
+
+# Retrieve secret from AWS Secrets Manager
+SECRET_NAME="ngrok/auth"
+echo "Fetching secret from AWS Secrets Manager..."
+SECRET_JSON=$(/usr/local/bin/aws secretsmanager get-secret-value --secret-id "$SECRET_NAME" --query SecretString --output text)
+if [[ -z "$SECRET_JSON" ]]; then
+  echo "Failed to fetch secret from Secrets Manager"
+  exit 1
+fi
+
+TOKEN_KEY=$(echo "$SECRET_JSON" | jq -r '.Token')
+if [[ -z "$TOKEN_KEY" ]]; then
+  echo "Failed to extract token from secret"
+  exit 1
+fi
+
+# Add Docker's official repository
+echo "Adding Docker's official repository..."
+yum-config-manager --add-repo https://download.docker.com/linux/rhel/docker-ce.repo
+
+# Install Docker
+echo "Installing Docker..."
+yum install -y docker-ce docker-ce-cli containerd.io
+echo "Starting and enabling Docker service..."
+systemctl start docker
+systemctl enable docker
+systemctl status docker || { echo "Docker service failed to start"; exit 1; }
+
+# Add ec2-user to Docker group
+echo "Adding ec2-user to Docker group..."
+usermod -aG docker ec2-user
+
+# Pull and run the Docker image
+echo "Pulling Docker image..."
+docker pull subrahmanyapoojary1999/rock-paper-scissor:latest
+echo "Running Docker container..."
+docker run -it --name rps -p 80:5000 -p 4040:4040 -e NGROK_AUTHTOKEN="$TOKEN_KEY" subrahmanyapoojary1999/rock-paper-scissor
+
+# Ensure Docker container runs successfully
+if [[ $? -ne 0 ]]; then
+  echo "Failed to run the Docker container"
+  exit 1
+fi
+
+echo "Script execution completed successfully!"

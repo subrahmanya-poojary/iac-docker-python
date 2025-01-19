@@ -1,0 +1,104 @@
+/* General body styles */
+body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #ff7e5f, #feb47b); /* Gradient background */
+    color: #333;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh; /* Ensures full screen coverage */
+}
+
+/* Container for the main content */
+.container {
+    margin: 50px auto;
+    max-width: 800px;
+    background: #fff;
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(60, 9, 9, 0.1);
+    border-radius: 8px;
+    z-index: 1;
+    position: relative; /* Ensures it sits above the background */
+}
+
+/* Header styling */
+h1 {
+    font-size: 32px;
+    color: #007bff;
+}
+
+/* Paragraph styling */
+p {
+    font-size: 18px;
+    margin: 10px 0;
+}
+
+/* Button container styling */
+.buttons {
+    margin: 20px 0;
+}
+
+/* Button styling */
+button {
+    background: #007bff;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    font-size: 18px;
+    margin: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background: #0056b3;
+}
+
+/* Game board layout */
+#game-board {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+/* Player and computer choice styling */
+#player-choice, #computer-choice {
+    width: 45%;
+    text-align: center;
+}
+
+#player-choice img, #computer-choice img {
+    width: 100px;
+    height: 100px;
+}
+
+/* Result section styling */
+#result {
+    margin-top: 20px;
+}
+
+#result h2 {
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+
+#result p {
+    font-size: 20px;
+    margin: 5px 0;
+}
+
+/* Scorecard styling */
+#scorecard {
+    margin-top: 20px;
+}
+
+#scorecard h3 {
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+
+#score {
+    font-size: 20px;
+    margin: 5px 0;
+}

@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Over</title>
+    <link rel="stylesheet" href="/static/gameover.css">
+</head>
+<body>
+    <div class="game-over-container">
+        <h1>Game Over!</h1>
+        <p>Player: {{ player_wins }} | Computer: {{ computer_wins }}</p>
+        <h2>Winner: {{ final_winner }}</h2>
+        <button onclick="window.location.href='/'">Start New Game</button>
+    </div>
+</body>
+</html>

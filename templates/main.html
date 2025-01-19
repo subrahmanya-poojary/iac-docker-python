@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rock Paper Scissors</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Rock, Paper, Scissors</h1>
+        <p>Choose your move:</p>
+        <div class="buttons">
+            <button onclick="playGame('rock')">Rock</button>
+            <button onclick="playGame('paper')">Paper</button>
+            <button onclick="playGame('scissors')">Scissors</button>
+        </div>
+
+        <!-- Section for showing choices and result -->
+        <div id="game-board">
+            <div id="player-choice">
+                <h2>Your Choice:</h2>
+                <div id="player-img"></div>
+            </div>
+            <div id="computer-choice">
+                <h2>Computer's Choice:</h2>
+                <div id="computer-img"></div>
+            </div>
+        </div>
+
+        <div id="result">
+            <h2>Result:</h2>
+            <p id="game-result"></p>
+        </div>
+
+        <!-- Scoreboard with Stars -->
+        <div id="scoreboard">
+            <h3>Scoreboard</h3>
+            <p>Player: <span id="player-score">0</span> | Computer: <span id="computer-score">0</span></p>
+            <div id="stars">
+                <h4>Stars</h4>
+                <p>Player: <span id="player-stars"></span> </p>
+                <p>Computer: <span id="computer-stars"></span></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let playerScore = 0;
+        let computerScore = 0;
+        let playerWins = 0;
+        let computerWins = 0;
+
+        async function playGame(choice) {
+            const response = await fetch('/play', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ choice: choice })
+            });
+
+            const data = await response.json();
+            document.getElementById('player-img').innerHTML = `<img src="/static/${data.player_choice}.svg" alt="${data.player_choice}" />`;
+            document.getElementById('computer-img').innerHTML = `<img src="/static/${data.computer_choice}.svg" alt="${data.computer_choice}" />`;
+            document.getElementById('game-result').textContent = data.result;
+
+            // Update scores
+            if (data.winner === "Player") {
+                playerScore++;
+                playerWins++;
+            } else if (data.winner === "Computer") {
+                computerScore++;
+                computerWins++;
+            }
+
+            // Update scoreboard
+            document.getElementById('player-score').textContent = playerScore;
+            document.getElementById('computer-score').textContent = computerScore;
+
+            // Update stars
+            document.getElementById('player-stars').textContent = generateStars(playerWins);
+            document.getElementById('computer-stars').textContent = generateStars(computerWins);
+
+            // If game over, display winner
+            if (data.game_over) {
+                setTimeout(() => {
+                    window.location.href = '/game_over';
+                }, 1000); // Redirect after a short delay
+            }
+        }
+
+        function generateStars(wins) {
+            let stars = "";
+            for (let i = 0; i < 3; i++) {
+                stars += i < wins ? "⭐" : "☆"; // Fill stars based on wins
+            }
+            return stars;
+        }
+    </script>
+</body>
+</html>

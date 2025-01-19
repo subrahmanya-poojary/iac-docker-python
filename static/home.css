@@ -1,0 +1,82 @@
+/* General body styles */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    transition: background-color 0.5s ease; /* Smooth background transition */
+}
+
+/* Gradient background for the start page */
+.start-game {
+    background: linear-gradient(135deg, #ff7e5f, #feb47b);
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    animation: gradientAnimation 10s ease infinite; /* Gradient animation */
+}
+
+/* Keyframes for a smooth background gradient animation */
+@keyframes gradientAnimation {
+    0% {
+        background: linear-gradient(135deg, #ff7e5f, #feb47b);
+    }
+    50% {
+        background: linear-gradient(135deg, #feb47b, #ff7e5f);
+    }
+    100% {
+        background: linear-gradient(135deg, #ff7e5f, #feb47b);
+    }
+}
+
+.landing-container {
+    text-align: center;
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 30px 40px;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s ease-in-out;
+}
+
+.landing-container:hover {
+    transform: scale(1.05); /* Slightly enlarge the container on hover */
+}
+
+h1 {
+    font-size: 36px;
+    margin-bottom: 20px;
+}
+
+p {
+    font-size: 18px;
+    margin-bottom: 30px;
+}
+
+button {
+    background: #ff7e5f;
+    color: white;
+    padding: 15px 30px;
+    font-size: 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s ease-in-out;
+}
+
+button:hover {
+    background: #feb47b;
+    transition: background-color 0.3s, transform 0.2s ease-in-out;
+    transform: scale(1.1); /* Slightly enlarge the button on hover */
+}
+
+#stars {
+    font-size: 24px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+#stars span {
+    padding: 5px;
+}
