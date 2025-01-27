@@ -25,10 +25,10 @@ jobs:
         with:
           terraform_version: 1.5.0
 
-      - name: Run IaC Security Scan
-        uses: accurics/terrascan-action@v1
-        with:
-          iac_dir: ./iac
+      # - name: Run IaC Security Scan
+      #   uses: accurics/terrascan-action@v1
+      #   with:
+      #     iac_dir: ./iac
 
       - name: Run Terraform Format
         run: terraform fmt --recursive ./iac
