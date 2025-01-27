@@ -35,8 +35,8 @@ jobs:
 
       - name: Initialize Terraform Directory
         run: | 
-        cd ./iac
-        terraform init -backend-config='terraform.${{ env.TF_ENV }}.conf' ./iac
+          cd ./iac
+          terraform init -backend-config='terraform.${{ env.TF_ENV }}.conf' ./iac
 
       - name: Run Terraform Validate
         run: terraform validate ./iac
