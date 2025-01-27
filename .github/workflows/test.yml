@@ -1,0 +1,80 @@
+# name: Terraform CICD Workflow
+
+# on:
+#   pull_request:
+#     branches:
+#       - main
+    
+#   push:
+#     branches:
+#       - main
+
+# jobs:
+#   iac-pipeline:
+#     runs-on: ubuntu-latest
+
+#     env:
+#       TF_ENV: dev
+#       TF_VAR_FILE: terraform.${{ env.TF_ENV }}.tfvars
+#       TF_CONF_FILE: terraform.${{ env.TF_ENV }}.conf
+
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v3
+      
+#       - name: Set up Terraform
+#         uses: hashicorp/setup-terraform@v2
+#         with:
+#           terraform_version: 1.5.0
+
+#       - name: Run IaC Security Scan
+#         uses: accurics/terrascan-action@v1
+#         with:
+#           directory: ./iac
+
+#       - name: Run Terraform Format
+#         run: terraform fmt --recursive ./iac
+
+#       - name: Run Terraform Validate
+#         run: terraform validate ./iac
+
+#       - name: Initialize Terraform Directory
+#         run: terraform init -backend-config=${{ env.TF_CONF_FILE }} ./iac
+
+#       - name: Run Terraform Plan
+#         run: terraform plan -out=tfplan -var-file=${{ env.TF_VAR_FILE }} ./iac
+
+#   apply_pipeline:
+#     needs: iac-pipeline
+#     runs-on: ubuntu-latest
+#     if: github.ref == 'refs/heads/main'
+
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v3
+
+#       - name: Create Approval Issue
+#         id: create_issue
+#         uses: actions/github-script@v6
+#         with:
+#           script: |
+#             const { data: issue } = await github.rest.issues.create({
+#               owner: context.repo.owner,
+#               repo: context.repo.repo,
+#               title: "Approval required: Terraform Apply",
+#               body: `A Terraform plan has been generated. Please approve the changes by commenting 'approve' on this issue.`,
+#               labels: ["terraform-approval"],
+#             });
+#             return issue.number;
+#           result-encoding: string
+      
+#       - name: Wait for Approval
+#         uses: fredriksthlm/wait-for-approval-action@1.2
+#         with:
+#           issue-number: ${{ steps.create_issue.outputs.result }}
+#           approval-comment: 'approve'
+#           github-token: ${{ secrets.GITHUB_TOKEN }}
+#           timeout-seconds: 3600
+
+#       - name: Terraform Apply
+#         run: terraform apply tfplan
