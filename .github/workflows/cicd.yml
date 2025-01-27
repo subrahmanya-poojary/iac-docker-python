@@ -47,51 +47,43 @@ jobs:
         run: |
           cd ./iac
           terraform plan -out=tfplan -var-file=terraform.${{ env.TF_ENV }}.tfvars > plan_output.txt
-        continue-on-error: false
-
+      
       - name: Save Terraform Plan Output
         id: save_plan
         run: |
-          echo "plan=$(cat ./iac/plan_output.txt)" >> $GITHUB_ENV
-
-  apply_pipeline:
-    needs: iac-pipeline
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    permissions:
-      issues: write  # Ensure write permissions for issues
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
+          # Safely encode the plan output and store it in a temporary file
+          cat ./iac/plan_output.txt | base64 > plan_encoded.txt
+          echo "plan=$(cat plan_encoded.txt)" >> $GITHUB_ENV
+      
       - name: Create Approval Issue with Plan Details
         id: create_issue
         uses: actions/github-script@v6
         with:
           script: |
-            const planDetails = process.env.plan || "Plan details unavailable.";
+            const planEncoded = process.env.plan || "Plan details unavailable.";
+            const planDecoded = Buffer.from(planEncoded, 'base64').toString('utf-8');
+      
             const { data: issue } = await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
               title: "Approval required: Terraform Apply",
               body: `
               A Terraform plan has been generated and is ready for review.
-
+              
               **Terraform Plan Details**:
               \`\`\`
-              ${planDetails}
+              ${planDecoded}
               \`\`\`
-
+              
               **Steps to Approve**:
               1. Review the Terraform plan.
               2. Add a comment to this issue with **approve** to proceed.
-
+              
               **Note**: This will automatically trigger the apply pipeline.`,
               labels: ["terraform-approval"],
             });
             core.setOutput("issue_number", issue.number);
-
+        
       - name: Wait for Approval
         uses: actions/github-script@v6
         with:
