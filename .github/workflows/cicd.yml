@@ -156,4 +156,4 @@ jobs:
       - name: Terraform Apply
         run: |
           cd ./iac
-          terraform apply tfplan
+          terraform apply -var-file=terraform.${{ env.TF_ENV }}.tfvars
