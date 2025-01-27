@@ -31,7 +31,9 @@ jobs:
       #     iac_dir: ./iac
 
       - name: Run Terraform Format
-        run: terraform fmt --recursive ./iac
+        run: |
+          cd ./iac
+          terraform fmt --recursive 
 
       - name: Initialize Terraform Directory
         env:
@@ -43,10 +45,14 @@ jobs:
           terraform init -backend-config='backend.${{ env.TF_ENV }}.conf'
 
       - name: Run Terraform Validate
-        run: terraform validate ./iac
+        run: |
+          cd ./iac
+          terraform validate 
 
       - name: Run Terraform Plan
-        run: terraform plan -out=tfplan -var-file=terraform.${{ env.TF_ENV }}.tfvars ./iac
+        run: |
+          cd ./iac
+          terraform plan -out=tfplan -var-file=terraform.${{ env.TF_ENV }}.tfvars
 
   apply_pipeline:
     needs: iac-pipeline
