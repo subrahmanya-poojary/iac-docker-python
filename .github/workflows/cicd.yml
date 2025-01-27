@@ -112,24 +112,24 @@ jobs:
           cd ./iac
           terraform init -backend-config='backend.${{ env.TF_ENV }}.conf'
           
-          - name: Create Approval Issue
-          id: create_issue
-          uses: actions/github-script@v6
-          with:
-            script: |
-              const { data: issue } = await github.rest.issues.create({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                title: "Approval required: Terraform Apply",
-                body: `
-                 A Terraform plan has been generated and is ready for review.
-                **Steps to Approve**:
-                1. Review the Terraform plan.
-                2. Add a comment to this issue with **approve** to proceed.
-                **Note**: This will automatically trigger the apply pipeline.`,
-                labels: ["terraform-approval"],
-              });
-              core.setOutput("issue_number", issue.number);
+      - name: Create Approval Issue
+        id: create_issue
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { data: issue } = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: "Approval required: Terraform Apply",
+              body: `
+                A Terraform plan has been generated and is ready for review.
+              **Steps to Approve**:
+              1. Review the Terraform plan.
+              2. Add a comment to this issue with **approve** to proceed.
+              **Note**: This will automatically trigger the apply pipeline.`,
+              labels: ["terraform-approval"],
+            });
+            core.setOutput("issue_number", issue.number);
       - name: Wait for Approval
         uses: actions/github-script@v6
         with:
