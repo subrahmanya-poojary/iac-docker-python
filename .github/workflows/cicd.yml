@@ -51,6 +51,8 @@ jobs:
     needs: iac-pipeline
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
+    permissions:
+      issues: write  # Ensure write permissions for issues
 
     steps:
       - name: Checkout code
@@ -65,7 +67,9 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               title: "Approval required: Terraform Apply",
-              body: `A Terraform plan has been generated and is ready for review.
+              body: `
+              A Terraform plan has been generated and is ready for review.
+
               **Steps to Approve**:
               1. Review the Terraform plan.
               2. Add a comment to this issue with **approve** to proceed.
