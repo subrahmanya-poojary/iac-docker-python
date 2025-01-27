@@ -76,6 +76,12 @@ jobs:
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.5.0
+
+      - name: Initialize Terraform Directory
+        run: | 
+          cd ./iac
+          terraform init -backend-config='backend.${{ env.TF_ENV }}.conf'
+          
       - name: Run Terraform Plan
         run: |
           cd ./iac
