@@ -32,12 +32,12 @@ jobs:
 
       - name: Run Terraform Format
         run: terraform fmt --recursive ./iac
+        
+      - name: Initialize Terraform Directory
+        run: terraform init -backend-config=terraform.${{ env.TF_ENV }}.conf ./iac
 
       - name: Run Terraform Validate
         run: terraform validate ./iac
-
-      - name: Initialize Terraform Directory
-        run: terraform init -backend-config=terraform.${{ env.TF_ENV }}.conf ./iac
 
       - name: Run Terraform Plan
         run: terraform plan -out=tfplan -var-file=terraform.${{ env.TF_ENV }}.tfvars ./iac
