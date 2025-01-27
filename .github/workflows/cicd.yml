@@ -10,7 +10,7 @@ on:
       - main
 
 jobs:
-  iac-pipeline:
+  Terraform-Format:
     runs-on: ubuntu-latest
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -31,6 +31,25 @@ jobs:
         run: |
           cd ./iac
           terraform fmt --recursive 
+
+  Terraform-Validate:
+    needs: Terraform-Format
+    runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+      TF_ENV: dev
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
+
       - name: Initialize Terraform Directory
         run: | 
           cd ./iac
@@ -39,12 +58,31 @@ jobs:
         run: |
           cd ./iac
           terraform validate 
+
+  Terraform-Plan:
+    needs: Terraform-Validate
+    runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+      TF_ENV: dev
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
       - name: Run Terraform Plan
         run: |
           cd ./iac
           terraform plan -out=tfplan -var-file=terraform.${{ env.TF_ENV }}.tfvars
-  apply_pipeline:
-    needs: iac-pipeline
+
+  Terraform-Apply:
+    needs: Terraform-Plan
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     permissions:
@@ -88,6 +126,10 @@ jobs:
               });
               if (comments.some(comment => comment.body.toLowerCase().trim() === 'approve')) {
                 approved = true;
+                break;
+              }
+              elif (comments.some(comment => comment.body.toLowerCase().trim() === 'decline')){
+                pproved = false;
                 break;
               }
               await new Promise(resolve => setTimeout(resolve, 10000)); // Check every 10 seconds
