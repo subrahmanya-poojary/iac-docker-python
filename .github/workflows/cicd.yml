@@ -90,10 +90,6 @@ jobs:
                 approved = true;
                 break;
               }
-              elif (comments.some(comment => comment.body.toLowerCase().trim() === 'decline')){
-                pproved = false;
-                break;
-              }
               await new Promise(resolve => setTimeout(resolve, 10000)); // Check every 10 seconds
             }
             if (!approved) {
