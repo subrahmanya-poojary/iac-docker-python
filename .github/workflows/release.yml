@@ -1,0 +1,42 @@
+name: Release Workflow
+
+on:
+ workflow_dispatch:
+  inputs:
+   release_version:
+    description: "Release Version"
+    required: true
+    type: string
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone Repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Git
+        run: |
+         git config user.name "github-actions[bot]"
+         git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Merge Code to Main Branch
+        run: |
+         git checkout main
+         git merge --no-ff develop -m "Merging into Main for Release ${{ github.event.inputs.release_version }}"
+         git push origin main
+
+      - name: Create Release Tag
+        run: |
+         git tag ${{ github.event.inputs.release_version }}
+         git push origin ${{ github.event.inputs.release_version }}
+
+      - name: Public Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.release_version }}
+          name: Release ${{ github.event.inputs.release_version }}
+          body: "Release ${{ github.event.inputs.release_version }} merged from develop to main"
