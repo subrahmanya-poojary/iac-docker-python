@@ -22,6 +22,27 @@ jobs:
           config-path: .gitleaks.toml
           fail: true  # Fails the job if secrets are detected
 
+      - name: Run Checkov security scan
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: ./iac
+          soft_fail: false  # Set to true if you don't want to fail the workflow
+
+      - name: Run tfsec security scan
+        uses: aquasecurity/tfsec-action@v1.0.0
+        with:
+          working_directory: ./iac
+          soft_fail: false  # Set to true if you don't want to fail the workflow
+
+      - name: Run Trivy static analysis (IaC security scan)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: config
+          scan-ref: ./iac
+          exit-code: 1
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+
   Terraform-Format:
     needs: Pre-Security-Check
     runs-on: ubuntu-latest
@@ -72,27 +93,6 @@ jobs:
         run: |
           cd ./iac
           terraform validate 
-
-      - name: Run Checkov security scan
-        uses: bridgecrewio/checkov-action@v12
-        with:
-          directory: ./iac
-          soft_fail: false  # Set to true if you don't want to fail the workflow
-
-      - name: Run tfsec security scan
-        uses: aquasecurity/tfsec-action@v1.0.0
-        with:
-          working_directory: ./iac
-          soft_fail: false  # Set to true if you don't want to fail the workflow
-
-      - name: Run Trivy static analysis (IaC security scan)
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: config
-          scan-ref: ./iac
-          exit-code: 1
-          ignore-unfixed: true
-          severity: HIGH,CRITICAL
 
   Terraform-Plan:
     needs: Terraform-Validate
