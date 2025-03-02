@@ -1,80 +1,197 @@
-# name: Terraform CICD Workflow
+name: Terraform CICD Workflow
 
-# on:
-#   pull_request:
-#     branches:
-#       - main
-    
-#   push:
-#     branches:
-#       - main
+on:
+  pull_request:
+    branches:
+      - develop
 
-# jobs:
-#   iac-pipeline:
-#     runs-on: ubuntu-latest
+  push:
+    branches:
+      - develop
 
-#     env:
-#       TF_ENV: dev
-#       TF_VAR_FILE: terraform.${{ env.TF_ENV }}.tfvars
-#       TF_CONF_FILE: terraform.${{ env.TF_ENV }}.conf
+jobs:
+  Pre-Security-Check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-#     steps:
-#       - name: Checkout code
-#         uses: actions/checkout@v3
-      
-#       - name: Set up Terraform
-#         uses: hashicorp/setup-terraform@v2
-#         with:
-#           terraform_version: 1.5.0
+      - name: Run GitLeaks to detect secrets
+        uses: gitleaks/gitleaks-action@v2
+        with:
+          config-path: .gitleaks.toml
+          fail: true  # Fails the job if secrets are detected
 
-#       - name: Run IaC Security Scan
-#         uses: accurics/terrascan-action@v1
-#         with:
-#           directory: ./iac
+  Terraform-Format:
+    needs: Pre-Security-Check
+    runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+      TF_ENV: dev
 
-#       - name: Run Terraform Format
-#         run: terraform fmt --recursive ./iac
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-#       - name: Run Terraform Validate
-#         run: terraform validate ./iac
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
 
-#       - name: Initialize Terraform Directory
-#         run: terraform init -backend-config=${{ env.TF_CONF_FILE }} ./iac
+      - name: Run Terraform Format
+        run: |
+          cd ./iac
+          terraform fmt --recursive 
 
-#       - name: Run Terraform Plan
-#         run: terraform plan -out=tfplan -var-file=${{ env.TF_VAR_FILE }} ./iac
+  Terraform-Validate:
+    needs: Terraform-Format
+    runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+      TF_ENV: dev
 
-#   apply_pipeline:
-#     needs: iac-pipeline
-#     runs-on: ubuntu-latest
-#     if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-#     steps:
-#       - name: Checkout code
-#         uses: actions/checkout@v3
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
 
-#       - name: Create Approval Issue
-#         id: create_issue
-#         uses: actions/github-script@v6
-#         with:
-#           script: |
-#             const { data: issue } = await github.rest.issues.create({
-#               owner: context.repo.owner,
-#               repo: context.repo.repo,
-#               title: "Approval required: Terraform Apply",
-#               body: `A Terraform plan has been generated. Please approve the changes by commenting 'approve' on this issue.`,
-#               labels: ["terraform-approval"],
-#             });
-#             return issue.number;
-#           result-encoding: string
-      
-#       - name: Wait for Approval
-#         uses: fredriksthlm/wait-for-approval-action@1.2
-#         with:
-#           issue-number: ${{ steps.create_issue.outputs.result }}
-#           approval-comment: 'approve'
-#           github-token: ${{ secrets.GITHUB_TOKEN }}
-#           timeout-seconds: 3600
+      - name: Initialize Terraform Directory
+        run: | 
+          cd ./iac
+          terraform init -backend-config='backend.${{ env.TF_ENV }}.conf'
 
-#       - name: Terraform Apply
-#         run: terraform apply tfplan
+      - name: Run Terraform Validate
+        run: |
+          cd ./iac
+          terraform validate 
+
+      - name: Run Checkov security scan
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: ./iac
+          soft_fail: false  # Set to true if you don't want to fail the workflow
+
+      - name: Run tfsec security scan
+        uses: aquasecurity/tfsec-action@v1.0.0
+        with:
+          working_directory: ./iac
+          soft_fail: false  # Set to true if you don't want to fail the workflow
+
+      - name: Run Trivy static analysis (IaC security scan)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: config
+          scan-ref: ./iac
+          exit-code: 1
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+
+  Terraform-Plan:
+    needs: Terraform-Validate
+    runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+      TF_ENV: dev
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
+
+      - name: Initialize Terraform Directory
+        run: | 
+          cd ./iac
+          terraform init -backend-config='backend.${{ env.TF_ENV }}.conf'
+
+      - name: Run Terraform Plan
+        run: |
+          cd ./iac
+          terraform plan -out=tfplan -var-file=terraform.${{ env.TF_ENV }}.tfvars
+
+  Terraform-Apply:
+    needs: Terraform-Plan
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      issues: write  
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+      TF_ENV: dev
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
+
+      - name: Initialize Terraform Directory
+        run: | 
+          cd ./iac
+          terraform init -backend-config='backend.${{ env.TF_ENV }}.conf'
+
+      - name: Create Approval Issue
+        id: create_issue
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { data: issue } = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: "Approval required: Terraform Apply",
+              body: `
+                A Terraform plan has been generated and is ready for review.
+              **Steps to Approve**:
+              1. Review the Terraform plan.
+              2. Add a comment to this issue with **approve** to proceed.
+              **Note**: This will automatically trigger the apply pipeline.`,
+              labels: ["terraform-approval"],
+            });
+            core.setOutput("issue_number", issue.number);
+
+      - name: Wait for Approval
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issueNumber = ${{ steps.create_issue.outputs.issue_number }};
+            const timeout = 3600 * 1000;
+            const start = Date.now();
+            let approved = false;
+            while (Date.now() - start < timeout) {
+            const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+            });
+            if (comments.some(comment => comment.body.toLowerCase().trim() === 'approve')) {
+                approved = true;
+                break;
+            }
+            await new Promise(resolve => setTimeout(resolve, 10000));
+            }
+            if (!approved) {
+            throw new Error("Approval not received within the timeout period.");
+            }
+
+      - name: Terraform Apply
+        run: |
+          cd ./iac
+          terraform apply -var-file=terraform.${{ env.TF_ENV }}.tfvars -auto-approve
