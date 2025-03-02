@@ -19,7 +19,7 @@ jobs:
       - name: Run GitLeaks to detect secrets
         uses: gitleaks/gitleaks-action@v2
         with:
-          config-path: .gitleaks.toml
+          config-path: .
           fail: true  # Fails the job if secrets are detected
 
       - name: Run Checkov security scan
