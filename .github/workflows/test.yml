@@ -3,11 +3,13 @@ name: Terraform CICD Workflow
 on:
   pull_request:
     branches:
-      - develop
+      - '**'
+      - '!release/**'
 
   push:
     branches:
-      - develop
+      - '**'
+      - '!release/**'
 
 jobs:
   Pre-Security-Check:
