@@ -1,12 +1,16 @@
 name: Release Workflow
 
 on:
- workflow_dispatch:
-  inputs:
-   release_version:
-    description: "Release Version"
-    required: true
-    type: string
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: "Release Version"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  actions: write
 
 jobs:
   release:
@@ -23,22 +27,28 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git remote set-url origin https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git
-        
 
       - name: Merge Code to Main Branch
         run: |
-         git checkout main
-         git merge --no-ff develop -m "Merging into Main for Release ${{ github.event.inputs.release_version }}"
-         git push origin main
+          git checkout main
+          git merge --no-ff develop -m "Merging into Main for Release ${{ github.event.inputs.release_version }}"
+          git push origin main
 
       - name: Create Release Tag
         run: |
-         git tag ${{ github.event.inputs.release_version }}
-         git push origin ${{ github.event.inputs.release_version }}
+          git tag ${{ github.event.inputs.release_version }}
+          git push origin ${{ github.event.inputs.release_version }}
 
-      - name: Public Release
+      - name: Publish Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event.inputs.release_version }}
           name: Release ${{ github.event.inputs.release_version }}
           body: "Release ${{ github.event.inputs.release_version }} merged from develop to main"
+
+      - name: Trigger CICD Workflow
+        run: |
+          curl -X POST -H "Authorization: token ${{ secrets.PAT_TOKEN }}" \
+          -H "Accept: application/vnd.github.v3+json" \
+          https://api.github.com/repos/${{ github.repository }}/actions/workflows/terraform_cicd.yml/dispatches \
+          -d '{"ref":"main"}'
