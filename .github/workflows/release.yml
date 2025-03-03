@@ -50,5 +50,5 @@ jobs:
         run: |
           curl -X POST -H "Authorization: token ${{ secrets.PAT_TOKEN }}" \
           -H "Accept: application/vnd.github.v3+json" \
-          https://api.github.com/repos/${{ github.repository }}/actions/workflows/terraform_cicd.yml/dispatches \
+          https://api.github.com/repos/${{ github.repository }}/actions/workflows/cicd.yml/dispatches \
           -d '{"ref":"main"}'
