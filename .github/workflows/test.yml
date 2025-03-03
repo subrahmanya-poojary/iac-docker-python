@@ -1,11 +1,10 @@
 name: Terraform CICD Workflow
 
 on:
-  pull_request:
-    branches:
-      - '**'
-      - '!release/**'
-
+  # pull_request:
+  #   branches:
+  #     - '**'
+  #     - '!release/**'
   push:
     branches:
       - '**'
