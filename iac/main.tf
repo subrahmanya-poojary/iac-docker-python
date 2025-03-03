@@ -50,7 +50,7 @@ locals {
 
 
 module "ec2_instance" {
-    source                   = "git::https://github.com/terraform-aws-modules/terraform-aws-ec2-instance.git"
+    source                   = "git::https://github.com/terraform-aws-modules/terraform-aws-ec2-instance.git?ref=v5.7.1"
     for_each = var.ec2_config1
     create                   = each.value.create
     name                     = each.value.name
