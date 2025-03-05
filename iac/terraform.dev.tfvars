@@ -10,7 +10,7 @@ env        = "dev"
 region     = "us-east-1"
 
 ec2_config1 = {
-  dev-ec2-01 = {
+  ec2-01 = {
     create                      = true
     name                        = "dev-ec2-01"
     ami_linux                   = "ami-002f65b9c858c6f88"
@@ -26,7 +26,7 @@ ec2_config1 = {
     root_block_device_volume_size_01 = 80
     create_iam_instance_profile = true
     iam_instance_profile        = "dev-poc-deployment-role"
-    user_data_file_name_linux   = "userdata-01.txt"
+    user_data_file_name_linux   = "userdata-03.txt"
     tags    = {
         Ansible = "yes"
     }

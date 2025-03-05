@@ -26,7 +26,7 @@ ec2_config1 = {
     root_block_device_volume_size_01 = 80
     create_iam_instance_profile = true
     iam_instance_profile        = "dev-poc-deployment-role"
-    user_data_file_name_linux   = "userdata-01.txt"
+    user_data_file_name_linux   = "userdata-03.txt"
     tags    = {
         Ansible = "yes"
     }
