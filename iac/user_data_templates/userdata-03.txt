@@ -1,7 +1,7 @@
 #!/bin/bash
 # Update the system and install required packages
 set -x
-yum update -y
+#yum update -y
 yum install -y yum-utils
 
 # Add Docker's official repository
@@ -18,7 +18,7 @@ systemctl enable docker
 usermod -aG docker ec2-user
 
 # Pull the Docker image from Docker Hub
-docker pull subrahmanyapoojary1999/rock-paper-scissor:latest
+docker pull subrahmanyapoojary1999/new-image:latest
 
 # (Optional) Run the Docker container
-docker run -d --name rps -p 80:5000 subrahmanyapoojary1999/rock-paper-scissor:latest
+docker run -d --name rps -p 80:5000 subrahmanyapoojary1999/new-image:latest
