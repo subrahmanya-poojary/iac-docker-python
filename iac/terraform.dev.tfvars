@@ -10,7 +10,7 @@ env        = "dev"
 region     = "us-east-1"
 
 ec2_config1 = {
-  ec2-01 = {
+  dev-ec2-01 = {
     create                      = true
     name                        = "dev-ec2-01"
     ami_linux                   = "ami-002f65b9c858c6f88"
